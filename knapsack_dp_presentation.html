@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>0/1 背包問題</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #111111;
+      --muted: #555555;
+      --line: #b8b8b8;
+      --soft: #f3f3f3;
+      --slide-w: 1600;
+      --slide-h: 900;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e9e9e9;
+      color: var(--ink);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", Arial, sans-serif;
+    }
+
+    body { display: grid; place-items: center; }
+
+    .deck {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    .slide {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 1600px;
+      height: 900px;
+      padding: 72px 96px 64px;
+      background: var(--bg);
+      opacity: 0;
+      visibility: hidden;
+      transform-origin: center center;
+      transition: opacity 160ms ease;
+      overflow: hidden;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 28px;
+      font-size: 64px;
+      line-height: 1.16;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    h2 {
+      margin-bottom: 40px;
+      font-size: 44px;
+      line-height: 1.2;
+      font-weight: 800;
+    }
+
+    h3 {
+      margin-bottom: 18px;
+      font-size: 30px;
+      line-height: 1.3;
+      font-weight: 750;
+    }
+
+    p, li {
+      font-size: 27px;
+      line-height: 1.52;
+    }
+
+    ul, ol {
+      margin: 0;
+      padding-left: 1.25em;
+    }
+
+    li + li { margin-top: 12px; }
+
+    strong { font-weight: 800; }
+
+    .title-slide {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .title-slide h1 { font-size: 78px; }
+
+    .subtitle {
+      font-size: 34px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .rule {
+      width: 160px;
+      height: 5px;
+      margin: 6px 0 34px;
+      background: var(--ink);
+    }
+
+    .lead {
+      max-width: 1180px;
+      font-size: 34px;
+      line-height: 1.5;
+    }
+
+    .big-number {
+      font-size: 92px;
+      line-height: 1;
+      font-weight: 850;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 72px;
+      align-items: start;
+    }
+
+    .two-col.wide-left { grid-template-columns: 1.2fr 0.8fr; }
+
+    .stack > * + * { margin-top: 24px; }
+
+    .equation {
+      padding: 22px 30px;
+      border-left: 7px solid var(--ink);
+      background: var(--soft);
+      font-family: "Cambria Math", "Times New Roman", serif;
+      font-size: 31px;
+      line-height: 1.55;
+    }
+
+    .answer {
+      margin-top: 30px;
+      padding: 22px 28px;
+      border: 3px solid var(--ink);
+      font-size: 30px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+
+    .note {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 23px;
+      line-height: 1.45;
+    }
+
+    .animation-note {
+      margin-top: 26px;
+      padding-top: 18px;
+      border-top: 2px solid var(--line);
+      color: #333333;
+      font-size: 21px;
+      line-height: 1.45;
+    }
+
+    .animation-note strong { color: var(--ink); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 22px;
+      line-height: 1.3;
+    }
+
+    th, td {
+      padding: 14px 12px;
+      border: 2px solid var(--line);
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #e8e8e8;
+      font-weight: 800;
+    }
+
+    td:first-child, th:first-child { font-weight: 750; }
+
+    .compact-table { font-size: 20px; }
+    .compact-table th, .compact-table td { padding: 11px 8px; }
+
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .steps li {
+      position: relative;
+      padding-left: 56px;
+    }
+
+    .steps li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 1px;
+      width: 38px;
+      height: 38px;
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .set-line {
+      margin: 12px 0;
+      font-family: "Cambria Math", "Times New Roman", serif;
+      font-size: 27px;
+      line-height: 1.45;
+    }
+
+    .footer {
+      position: absolute;
+      left: 96px;
+      right: 96px;
+      bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      color: #666666;
+      font-size: 17px;
+    }
+
+    .controls {
+      position: fixed;
+      right: 20px;
+      bottom: 18px;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+    }
+
+    .controls button {
+      width: 44px;
+      height: 40px;
+      border: 1px solid #888888;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #111111;
+      font: 700 18px/1 Arial, sans-serif;
+      cursor: pointer;
+    }
+
+    .controls button:hover { background: #f1f1f1; }
+
+    .progress {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      z-index: 30;
+      height: 5px;
+      background: #111111;
+      transition: width 180ms ease;
+    }
+
+    @media (max-width: 700px) {
+      .controls { right: 8px; bottom: 8px; }
+    }
+
+    @media print {
+      html, body {
+        width: auto;
+        height: auto;
+        overflow: visible;
+        background: white;
+      }
+      .deck { width: auto; height: auto; }
+      .slide {
+        position: relative;
+        left: 0;
+        top: 0;
+        opacity: 1;
+        visibility: visible;
+        transform: none !important;
+        page-break-after: always;
+      }
+      .controls, .progress { display: none; }
+      @page { size: 16in 9in; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" aria-label="0/1 背包問題簡報">
+    <section class="slide title-slide active" data-title="0/1 背包問題">
+      <h1>0/1 背包問題</h1>
+      <div class="rule"></div>
+      <p class="subtitle">從暴力搜尋到動態規劃</p>
+      <p class="lead">每件物品只能選一次，在容量限制內取得最大利潤。</p>
+      <div class="footer"><span>背包動態規劃</span><span>1 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="問題設定">
+      <h2>問題設定</h2>
+      <p class="lead">有一個容量為 8 的背包，以及 4 件物品。每件物品都有自己的重量與利潤。</p>
+      <div class="two-col" style="margin-top: 44px;">
+        <div>
+          <h3>目標</h3>
+          <ul>
+            <li>總重量不超過 8</li>
+            <li>總利潤盡可能大</li>
+            <li>每件物品只能選擇一次</li>
+          </ul>
+        </div>
+        <div>
+          <h3>本次方法</h3>
+          <ul>
+            <li>表格法</li>
+            <li>集合法</li>
+            <li>比較兩種方法的回溯方式</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer"><span>問題介紹</span><span>2 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="物品資料">
+      <h2>物品資料</h2>
+      <table>
+        <thead><tr><th>物品</th><th>重量</th><th>利潤</th></tr></thead>
+        <tbody>
+          <tr><td>物品 1</td><td>2</td><td>1</td></tr>
+          <tr><td>物品 2</td><td>3</td><td>2</td></tr>
+          <tr><td>物品 3</td><td>4</td><td>5</td></tr>
+          <tr><td>物品 4</td><td>5</td><td>6</td></tr>
+        </tbody>
+      </table>
+      <div class="answer">背包容量 M = 8。四件物品的總重量是 14，因此不能全部放入。</div>
+      <p class="animation-note"><strong>動畫範例：</strong>四件物品依序出現，最後顯示 14 &gt; 8，說明必須挑選子集合。</p>
+      <div class="footer"><span>問題介紹</span><span>3 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="0/1 的意義">
+      <h2>0/1 的意義</h2>
+      <div class="two-col wide-left">
+        <div>
+          <p class="lead">對每件物品，我們只有兩種決定：</p>
+          <ul>
+            <li><strong>X<sub>i</sub> = 0</strong>：不放入物品 i</li>
+            <li><strong>X<sub>i</sub> = 1</strong>：放入物品 i</li>
+          </ul>
+          <p style="margin-top: 28px;">物品不能分割，因此 X<sub>i</sub> 不能是 0.5 或其他分數。</p>
+        </div>
+        <div class="stack">
+          <div class="equation"><strong>最大化</strong><br>Σ p<sub>i</sub>X<sub>i</sub></div>
+          <div class="equation"><strong>限制</strong><br>Σ w<sub>i</sub>X<sub>i</sub> ≤ 8<br>X<sub>i</sub> ∈ {0, 1}</div>
+        </div>
+      </div>
+      <p class="note">例如一台果汁機只能整台帶走，不能只帶走半台。</p>
+      <div class="footer"><span>問題介紹</span><span>4 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="暴力搜尋">
+      <h2>暴力搜尋</h2>
+      <div class="two-col">
+        <div>
+          <p class="lead">每件物品都有「選」與「不選」兩種可能。</p>
+          <p>4 件物品共有：</p>
+          <p class="big-number">2⁴ = 16</p>
+        </div>
+        <div>
+          <p class="lead">n 件物品共有 2ⁿ 種選法。</p>
+          <p>暴力法可以列出所有組合，再從可行組合中找出最大利潤。</p>
+          <p>當物品數量增加時，組合數量會快速成長。</p>
+        </div>
+      </div>
+      <p class="animation-note"><strong>動畫範例：</strong>依序產生 0000、0001、0010 到 1111，並標記超過容量的組合。</p>
+      <div class="footer"><span>動態規劃思路</span><span>5 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="動態規劃的核心">
+      <h2>動態規劃的核心</h2>
+      <p class="lead">動態規劃把原問題拆成較小的問題，並保存已經算過的最佳答案。</p>
+      <div class="two-col" style="margin-top: 42px;">
+        <div>
+          <h3>選項一</h3>
+          <p>不放入目前物品，沿用先前的最佳結果。</p>
+        </div>
+        <div>
+          <h3>選項二</h3>
+          <p>放入目前物品，將剩餘容量的最佳結果加上目前利潤。</p>
+        </div>
+      </div>
+      <div class="answer">每個狀態都比較「不放」與「放入」，保留利潤較大的結果。</div>
+      <div class="footer"><span>動態規劃思路</span><span>6 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="DP 狀態定義">
+      <h2>DP 狀態定義</h2>
+      <div class="equation" style="font-size: 38px; margin-bottom: 40px;">
+        V(i, w) = 只考慮前 i 件物品，容量為 w 時的最大利潤
+      </div>
+      <div class="two-col">
+        <div>
+          <h3>表格座標</h3>
+          <ul>
+            <li>列 i：目前考慮到第幾件物品</li>
+            <li>欄 w：目前可使用的背包容量</li>
+            <li>格子 V(i,w)：此狀態的最大利潤</li>
+          </ul>
+        </div>
+        <div>
+          <h3>最終目標</h3>
+          <p class="big-number" style="font-size: 68px;">V(4,8)</p>
+          <p>考慮全部 4 件物品，背包容量為 8。</p>
+        </div>
+      </div>
+      <div class="footer"><span>表格法</span><span>7 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="DP 表格初始化">
+      <h2>DP 表格初始化</h2>
+      <div class="two-col">
+        <div>
+          <h3>表格範圍</h3>
+          <ul>
+            <li>欄：容量 0 到 8</li>
+            <li>列：物品 0 到 4</li>
+          </ul>
+        </div>
+        <div>
+          <h3>初始條件</h3>
+          <ul>
+            <li>沒有物品時，最大利潤為 0</li>
+            <li>容量為 0 時，最大利潤為 0</li>
+          </ul>
+        </div>
+      </div>
+      <table class="compact-table" style="margin-top: 42px;">
+        <tr><th>物品＼容量</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+        <tr><th>0</th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><th>物品 1</th><td>0</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th>物品 2</th><td>0</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th>物品 3</th><td>0</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th>物品 4</th><td>0</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </table>
+      <p class="animation-note"><strong>動畫範例：</strong>空白表格出現後，依序將第 0 列與第 0 欄填成 0。</p>
+      <div class="footer"><span>表格法</span><span>8 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="狀態轉移公式">
+      <h2>狀態轉移公式</h2>
+      <div class="equation" style="font-size: 39px; margin-bottom: 35px;">
+        V(i,w) = max{ V(i−1,w), V(i−1,w−w<sub>i</sub>) + p<sub>i</sub> }
+      </div>
+      <div class="two-col">
+        <div>
+          <h3>不放物品 i</h3>
+          <p>使用 V(i−1,w)，直接沿用上一列同一容量的最佳結果。</p>
+        </div>
+        <div>
+          <h3>放入物品 i</h3>
+          <p>使用 V(i−1,w−w<sub>i</sub>) + p<sub>i</sub>，把剩餘容量的結果加上目前利潤。</p>
+        </div>
+      </div>
+      <div class="answer">若 w<sub>i</sub> &gt; w，物品放不進去，因此 V(i,w) = V(i−1,w)。</div>
+      <div class="footer"><span>表格法</span><span>9 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="填入物品 1">
+      <h2>填入物品 1</h2>
+      <p class="lead"><strong>重量 = 2，利潤 = 1</strong></p>
+      <ul style="margin-bottom: 42px;">
+        <li>容量 0、1：物品放不進去，利潤為 0</li>
+        <li>容量 2 以上：可以放入物品 1，利潤為 1</li>
+      </ul>
+      <table>
+        <tr><th>容量</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+        <tr><th>物品 1</th><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+      </table>
+      <p class="animation-note"><strong>動畫範例：</strong>容量游標從 0 移動到 8。到達容量 2 時，物品 1 進入背包，後續格子依序變成 1。</p>
+      <div class="footer"><span>表格法</span><span>10 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="加入物品 2">
+      <h2>加入物品 2</h2>
+      <div class="two-col" style="margin-bottom: 34px;">
+        <div>
+          <h3>容量 3</h3>
+          <p>max(不放得到 1，放入得到 2) = <strong>2</strong></p>
+        </div>
+        <div>
+          <h3>容量 5</h3>
+          <p>物品 1 與物品 2 同時放入，總重量為 5，總利潤為 <strong>3</strong>。</p>
+        </div>
+      </div>
+      <table>
+        <tr><th>容量</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+        <tr><th>前 2 件</th><td>0</td><td>0</td><td>1</td><td>2</td><td>2</td><td>3</td><td>3</td><td>3</td><td>3</td></tr>
+      </table>
+      <p class="animation-note"><strong>動畫範例：</strong>高亮「不放」與「放入」的來源格，再將較大值寫入目前格子。</p>
+      <div class="footer"><span>表格法</span><span>11 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="加入物品 3">
+      <h2>加入物品 3</h2>
+      <p class="lead"><strong>重量 = 4，利潤 = 5</strong></p>
+      <div class="two-col" style="margin-bottom: 32px;">
+        <ul>
+          <li>容量 4：只放物品 3，利潤為 5</li>
+          <li>容量 6：物品 1 + 物品 3，利潤為 6</li>
+        </ul>
+        <ul>
+          <li>容量 7：物品 2 + 物品 3，利潤為 7</li>
+          <li>容量 8：目前最大利潤仍為 7</li>
+        </ul>
+      </div>
+      <table>
+        <tr><th>容量</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+        <tr><th>前 3 件</th><td>0</td><td>0</td><td>1</td><td>2</td><td>5</td><td>5</td><td>6</td><td>7</td><td>7</td></tr>
+      </table>
+      <div class="footer"><span>表格法</span><span>12 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="加入物品 4">
+      <h2>加入物品 4</h2>
+      <div class="two-col">
+        <div>
+          <p class="lead"><strong>重量 = 5，利潤 = 6</strong></p>
+          <h3>容量 8 的兩個選項</h3>
+          <p>不放：V(3,8) = 7</p>
+          <p>放入：V(3,3) + 6 = 2 + 6 = 8</p>
+        </div>
+        <div>
+          <div class="equation" style="font-size: 42px; margin-top: 30px;">V(4,8)<br>= max(7,8)<br>= <strong>8</strong></div>
+        </div>
+      </div>
+      <p class="animation-note"><strong>動畫範例：</strong>先高亮 V(3,8)，再高亮 V(3,3)，讓數值 2 與物品 4 的利潤 6 結合，最後將 8 填入 V(4,8)。</p>
+      <div class="footer"><span>表格法</span><span>13 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="完成的 DP 表格">
+      <h2>完成的 DP 表格</h2>
+      <table class="compact-table">
+        <tr><th>物品＼容量</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+        <tr><th>0</th><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+        <tr><th>物品 1</th><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+        <tr><th>物品 2</th><td>0</td><td>0</td><td>1</td><td>2</td><td>2</td><td>3</td><td>3</td><td>3</td><td>3</td></tr>
+        <tr><th>物品 3</th><td>0</td><td>0</td><td>1</td><td>2</td><td>5</td><td>5</td><td>6</td><td>7</td><td>7</td></tr>
+        <tr><th>物品 4</th><td>0</td><td>0</td><td>1</td><td>2</td><td>5</td><td>6</td><td>6</td><td>7</td><td><strong>8</strong></td></tr>
+      </table>
+      <div class="answer">表格右下角 V(4,8) = 8，因此最大利潤是 8。</div>
+      <p class="animation-note"><strong>程式碼動畫範例：</strong>雙層迴圈逐格掃描表格。每次狀態轉移都同步高亮程式碼行、來源格與寫入格。</p>
+      <div class="footer"><span>表格法</span><span>14 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="回溯選擇的物品">
+      <h2>回溯選擇的物品</h2>
+      <ol class="steps">
+        <li>V(4,8) = 8，與上一列同欄的 7 不同，因此選擇物品 4。</li>
+        <li>剩餘容量為 8 − 5 = 3。</li>
+        <li>V(3,3) 與 V(2,3) 相同，因此不選物品 3。</li>
+        <li>V(2,3) 與 V(1,3) 不同，因此選擇物品 2。</li>
+      </ol>
+      <div class="answer">答案：(X₁, X₂, X₃, X₄) = (0, 1, 0, 1)<br>總重量 = 3 + 5 = 8　最大利潤 = 2 + 6 = 8</div>
+      <p class="animation-note"><strong>動畫範例：</strong>從右下角逐格回溯，被選中的物品列改為醒目顯示。</p>
+      <div class="footer"><span>表格法</span><span>15 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="集合法">
+      <h2>集合法</h2>
+      <p class="lead">集合法使用有序對表示一種選擇結果：</p>
+      <div class="equation" style="font-size: 44px; text-align: center; margin: 24px 0 34px;">（利潤，重量）</div>
+      <div class="two-col">
+        <div>
+          <h3>初始集合</h3>
+          <p class="set-line">S⁰ = {(0,0)}</p>
+        </div>
+        <div>
+          <h3>加入新物品</h3>
+          <ul>
+            <li>不選：保留原本的有序對</li>
+            <li>選擇：加上新物品的利潤與重量</li>
+          </ul>
+        </div>
+      </div>
+      <p class="animation-note"><strong>動畫範例：</strong>每個有序對分成兩條路，一條保留原值，另一條加上新物品。</p>
+      <div class="footer"><span>集合法</span><span>16 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="容量限制與支配規則">
+      <h2>容量限制與支配規則</h2>
+      <div class="two-col">
+        <div>
+          <h3>容量限制</h3>
+          <p>重量超過 8 的有序對直接刪除。</p>
+          <p class="set-line">例如：(8,9)</p>
+        </div>
+        <div>
+          <h3>支配規則</h3>
+          <p>若狀態 A 的重量不大於狀態 B，而且利潤不小於狀態 B，則 A 支配 B。</p>
+        </div>
+      </div>
+      <div class="equation" style="margin-top: 36px; font-size: 38px; text-align: center;">(5,4) 支配 (3,5)</div>
+      <p class="lead" style="margin-top: 26px;">(5,4) 的利潤較高、重量較小，因此可以刪除 (3,5)。</p>
+      <p class="animation-note"><strong>動畫範例：</strong>將有序對放在重量與利潤平面上，被支配的點逐漸淡出。</p>
+      <div class="footer"><span>集合法</span><span>17 / 18</span></div>
+    </section>
+
+    <section class="slide" data-title="兩種方法的結果">
+      <h2>兩種方法的結果</h2>
+      <table class="compact-table">
+        <thead><tr><th>比較項目</th><th>表格法</th><th>集合法</th></tr></thead>
+        <tbody>
+          <tr><td>狀態表示</td><td>V(i,w)</td><td>（利潤，重量）集合</td></tr>
+          <tr><td>核心操作</td><td>比較放與不放</td><td>合併新舊狀態</td></tr>
+          <tr><td>移除無效狀態</td><td>物品重量超過容量</td><td>超過容量或受到支配</td></tr>
+          <tr><td>找出物品</td><td>從表格回溯</td><td>從集合回溯</td></tr>
+          <tr><td>最終答案</td><td>選物品 2、4</td><td>選物品 2、4</td></tr>
+        </tbody>
+      </table>
+      <div class="answer">最佳選擇：(0, 1, 0, 1)　總重量：8　最大利潤：8</div>
+      <p class="lead" style="margin-top: 28px;">0/1 背包的核心，是對每件物品比較「選」與「不選」。表格法適合直接實作成程式，集合法則呈現可行狀態如何形成。</p>
+      <div class="footer"><span>重點整理</span><span>18 / 18</span></div>
+    </section>
+  </main>
+
+  <div class="controls" aria-label="簡報控制">
+    <button id="prev" type="button" aria-label="上一頁">←</button>
+    <button id="next" type="button" aria-label="下一頁">→</button>
+  </div>
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const progress = document.getElementById('progress');
+    let index = Math.max(0, Math.min(slides.length - 1, Number(location.hash.slice(1)) - 1 || 0));
+
+    function fitSlides() {
+      const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+      slides.forEach((slide) => {
+        slide.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      });
+    }
+
+    function show(nextIndex, updateHash = true) {
+      index = (nextIndex + slides.length) % slides.length;
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === index));
+      progress.style.width = `${((index + 1) / slides.length) * 100}%`;
+      document.title = `${index + 1}. ${slides[index].dataset.title}｜0/1 背包問題`;
+      if (updateHash) history.replaceState(null, '', `#${index + 1}`);
+    }
+
+    document.getElementById('prev').addEventListener('click', () => show(index - 1));
+    document.getElementById('next').addEventListener('click', () => show(index + 1));
+
+    document.addEventListener('keydown', (event) => {
+      if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(event.key)) {
+        event.preventDefault();
+        show(index + 1);
+      }
+      if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(event.key)) {
+        event.preventDefault();
+        show(index - 1);
+      }
+      if (event.key === 'Home') show(0);
+      if (event.key === 'End') show(slides.length - 1);
+      if (event.key.toLowerCase() === 'f') {
+        document.documentElement.requestFullscreen?.();
+      }
+    });
+
+    window.addEventListener('resize', fitSlides);
+    window.addEventListener('hashchange', () => {
+      const requested = Number(location.hash.slice(1)) - 1;
+      if (Number.isInteger(requested) && requested >= 0 && requested < slides.length) show(requested, false);
+    });
+
+    fitSlides();
+    show(index, false);
+  </script>
+</body>
+</html>
